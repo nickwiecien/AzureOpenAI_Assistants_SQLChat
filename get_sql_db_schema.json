@@ -1,0 +1,16 @@
+{
+    "name": "get_sql_db_schema",
+    "description": "Retrieve the schema (tables, columns, etc.) of an Azure SQL database named '<YOUR-DATABASE-NAME>'",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "database": {
+          "type": "string",
+          "description": "The name of the database to retrieve the schema for"
+        }
+      },
+      "required": [
+        "database"
+      ]
+    }
+  }

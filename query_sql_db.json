@@ -1,0 +1,21 @@
+{
+    "name": "query_sql_db",
+    "description": "Execute a query against an Azure SQL database named '<YOUR-DATABASE-NAME>'",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "database": {
+          "type": "string",
+          "description": "The name of the database to retrieve the schema for"
+        },
+        "query": {
+          "type": "string",
+          "description": "The query to execute"
+        }
+      },
+      "required": [
+        "database",
+        "query"
+      ]
+    }
+  }
