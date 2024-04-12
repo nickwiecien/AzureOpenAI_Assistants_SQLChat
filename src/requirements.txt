@@ -1,6 +1,6 @@
-streamlit==1.28.2
+streamlit==1.33.0
 requests==2.31.0
-pandas==2.0.2
-python-dotenv==1.0.0
-openai==1.11.1
+pandas==2.2.2
+python-dotenv==1.0.1
+openai==1.17.0
 pyodbc==5.1.0

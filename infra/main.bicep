@@ -136,7 +136,7 @@ module appSettings './core/host/appservice-appsettings.bicep' = {
       AZURE_OPENAI_API_KEY: '@Microsoft.KeyVault(VaultName=${keyVault.outputs.name};SecretName=${ai.outputs.aiApiKeySecretName})'
       AZURE_OPENAI_API_ENDPOINT: ai.outputs.aiEndpoint
       AZURE_OPENAI_API_VERSION: '2024-02-15-preview'
-      SCM_DO_BUILD_DURING_DEPLOYMENT: 1
+      SCM_DO_BUILD_DURING_DEPLOYMENT: true
     }
     name: web.outputs.SERVICE_WEB_NAME
   }
