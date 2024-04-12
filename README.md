@@ -8,12 +8,14 @@ Briefly, we showcase how to utilize the Azure OpenAI Assistants API (specificall
 
 Running this demo successfully requires having access to a SQL database which can be reached from a client machine using traditional SQL Authentication via the pyodbc library. For our development purposes, we utilized an Azure SQL Database loaded with the AdventureWorks dataset - this can be deployed directly from the Azure portal, and you can whitelist the IP address of the client machine running the demo.
 
-Further, you will need to have an instance of Azure OpenAI deployed in a region which supports the Assistants API. The system message and functions associated with the deployment can be found in `assistants_sys_msg.txt`, `get_sql_db_schema.json`, and `query_sql_db.json`.
+Further, you will need to have an instance of Azure OpenAI deployed in a region which supports the Assistants API. The system message and functions associated with the deployment can be found in `assistants_sys_msg.txt`, `get_sql_db_schema.json`, and `query_sql_db.json`. You will have to create an Assistant manually via the portal.
 
 Create an updated `.env` with values from your SQL/Azure OpenAI resources using `sample.env` as a template.
 
-### Running the Application
+### Running the Application locally
 
 To start the Streamlit SQL Chat Application run the following command:
 
-`python -m streamlit app_assistants.py`
+```shell
+python -m streamlit run app_assistants.py
+```
