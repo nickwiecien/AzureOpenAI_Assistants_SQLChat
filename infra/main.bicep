@@ -47,20 +47,35 @@ resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   tags: tags
 }
 
-module sql './core/database/sqlserver/sqlserver.bicep' = {
+module sql './app/db.bicep' = {
   scope: rg
   name: 'sql'
   params: {
     appUserPassword: appUserPassword
-    databaseName: !empty(sqlDatabaseName) ? sqlDatabaseName : '${abbrs.sqlServersDatabases}${resourceToken}'
     keyVaultName: keyVault.outputs.name
     name: !empty(sqlServerName) ? sqlServerName : '${abbrs.sqlServers}${resourceToken}'
     sqlAdminPassword: sqlAdminPassword
-    location: location
+    databaseName: !empty(sqlDatabaseName) ? sqlDatabaseName : '${abbrs.sqlServersDatabases}${resourceToken}'
     connectionStringKey: 'SqlConnectionString'
     tags: tags
+    location: location
   }
 }
+
+// module sql './core/database/sqlserver/sqlserver.bicep' = {
+//   scope: rg
+//   name: 'sql'
+//   params: {
+//     appUserPassword: appUserPassword
+//     databaseName: !empty(sqlDatabaseName) ? sqlDatabaseName : '${abbrs.sqlServersDatabases}${resourceToken}'
+//     keyVaultName: keyVault.outputs.name
+//     name: !empty(sqlServerName) ? sqlServerName : '${abbrs.sqlServers}${resourceToken}'
+//     sqlAdminPassword: sqlAdminPassword
+//     location: location
+//     connectionStringKey: 'SqlConnectionString'
+//     tags: tags
+//   }
+// }
 
 // The application frontend
 module web './app/web.bicep' = {

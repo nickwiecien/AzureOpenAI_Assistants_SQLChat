@@ -4,6 +4,7 @@ param tags object = {}
 
 param databaseName string = ''
 param keyVaultName string
+param connectionStringKey string
 
 @secure()
 param sqlAdminPassword string
@@ -24,6 +25,18 @@ module sqlServer '../core/database/sqlserver/sqlserver.bicep' = {
     keyVaultName: keyVaultName
     sqlAdminPassword: sqlAdminPassword
     appUserPassword: appUserPassword
+    connectionStringKey: connectionStringKey
+  }
+}
+
+module installSqlServerSchema './db-schema.bicep' = {
+  name: '${name}-schema'
+  params: {
+    name: name
+    sqlAdmin: 'sqlAdmin'
+    sqlAdminPassword: sqlAdminPassword
+    databaseName: sqlServer.outputs.databaseName
+    location: location
   }
 }
 

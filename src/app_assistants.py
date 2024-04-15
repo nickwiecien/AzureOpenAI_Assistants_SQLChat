@@ -27,7 +27,7 @@ def connect_to_sql_db():
 
     if not SQL_DB_CONNECTION_STRING:
         # Create a connection string for the Azure SQL database  
-        conn_str = f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={SERVER};DATABASE={DATABASE};UID={USERNAME};PWD={PASSWORD}'  
+        conn_str = f'Driver={{ODBC Driver 17 for SQL Server}};Server={SERVER};Database={DATABASE};UID={USERNAME};PWD={PASSWORD}'  
     else:
         conn_str = SQL_DB_CONNECTION_STRING
 

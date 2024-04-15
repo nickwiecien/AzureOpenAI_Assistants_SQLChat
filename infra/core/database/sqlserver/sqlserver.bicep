@@ -117,7 +117,7 @@ resource sqlAzureConnectionStringSercret 'Microsoft.KeyVault/vaults/secrets@2022
   parent: keyVault
   name: connectionStringKey
   properties: {
-    value: '${connectionString}; Password=${appUserPassword}'
+    value: '${connectionString}; PWD=${appUserPassword}'
   }
 }
 
@@ -125,6 +125,6 @@ resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' existing = {
   name: keyVaultName
 }
 
-var connectionString = 'Server=${sqlServer.properties.fullyQualifiedDomainName}; Database=${sqlServer::database.name}; User=${appUser}'
+var connectionString = 'Driver={ODBC Driver 17 for SQL Server};Server=${sqlServer.properties.fullyQualifiedDomainName}; Database=${sqlServer::database.name}; UID=${appUser}'
 output connectionStringKey string = connectionStringKey
 output databaseName string = sqlServer::database.name
