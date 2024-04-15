@@ -1,18 +1,8 @@
 # Import necessary libraries  
 import streamlit as st    
-import requests    
 import pandas as pd  
-import json  
-import dotenv  
-import os  
-import asyncio
+import json, dotenv, os, time, pyodbc
 from openai import AzureOpenAI
-import random
-
-import pyodbc
-import dotenv
-import os
-import pandas as pd
 
 # Load environment variables from .env file
 dotenv.load_dotenv(override=True)
@@ -24,6 +14,75 @@ client = AzureOpenAI(azure_endpoint=os.environ['AZURE_OPENAI_API_ENDPOINT'],
 
 ######################### UTILITIES START #########################
 
+def connect_to_sql_db():
+    """
+    Connects to the target SQL database and returns a connection object
+
+    """
+    SERVER = os.getenv('SERVER')  
+    DATABASE = os.getenv('DATABASE')  
+    USERNAME = os.getenv('SQL_USERNAME')  
+    PASSWORD = os.getenv('PASSWORD')  
+    SQL_DB_CONNECTION_STRING = os.getenv('SQL_DB_CONNECTION_STRING')
+
+    if not SQL_DB_CONNECTION_STRING:
+        # Create a connection string for the Azure SQL database  
+        conn_str = f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={SERVER};DATABASE={DATABASE};UID={USERNAME};PWD={PASSWORD}'  
+    else:
+        conn_str = SQL_DB_CONNECTION_STRING
+
+    # Establish a connection with the database
+    conn = pyodbc.connect(conn_str)
+
+    return conn
+
+def get_assistant(client):
+    assistant_id = os.getenv('ASSISTANT_ID')
+    assistants = client.beta.assistants.list()
+
+    for assistant in assistants:
+        if assistant.name == 'sqlchat':
+            return assistant
+        elif assistant.id == assistant_id:
+            return assistant
+        else:
+            return create_assistant(client)
+
+    return None
+
+def create_assistant(client):
+    model = os.getenv('AZURE_OPENAI_CHAT_MODEL_DEPLOYMENT_NAME')
+
+    # read the assistant sys msg from file
+    assistant_sys_msg = open('assistant_sys_msg.txt', 'r').read()
+
+    # read the get_sql_db_schema function from file
+    get_sql_db_schema_func = json.loads(open('get_sql_db_schema.json', 'r').read())
+
+    # read the query_sql_db function from file
+    query_sql_db_func = json.loads(open('query_sql_db.json', 'r').read())
+
+    assistant = client.beta.assistants.create(
+        name="sqlchat",
+        instructions=assistant_sys_msg,
+        tools=[
+            {
+                "type": "code_interpreter"
+            },
+            {
+                "type": "function",
+                "function": get_sql_db_schema_func
+            },
+            {
+                "type": "function",
+                "function": query_sql_db_func
+            }
+        ],
+        model=model
+    )
+
+    return assistant
+
 def get_sql_db_schema(database):
     """
     Retrieves schema (tables, columns, and column types) for target SQL database and returns as a JSON dictionary
@@ -31,40 +90,25 @@ def get_sql_db_schema(database):
     :param database: str, the name of the SQL database.
 
     """
-    dotenv.load_dotenv()
-    SERVER = os.getenv('SERVER')  
-    DATABASE = os.getenv('DATABASE')  
-    USERNAME = os.getenv('SQL_USERNAME')  
-    PASSWORD = os.getenv('PASSWORD')  
+    with connect_to_sql_db() as conn:
+        # Create a cursor from the connection
+        cursor = conn.cursor()
 
-    # Create a connection string for the Azure SQL database  
-    conn_str = f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={SERVER};DATABASE={DATABASE};UID={USERNAME};PWD={PASSWORD}'  
+        # Get all tables in the database
+        cursor.execute("SELECT table_schema, table_name FROM information_schema.tables WHERE table_type = 'BASE TABLE'")
+        tables = cursor.fetchall()
 
-    # Establish a connection with the database
-    conn = pyodbc.connect(conn_str)
+        table_details = []
 
-    # Create a cursor from the connection
-    cursor = conn.cursor()
-
-    # Get all tables in the database
-    cursor.execute("SELECT table_schema, table_name FROM information_schema.tables WHERE table_type = 'BASE TABLE'")
-    tables = cursor.fetchall()
-
-    table_details = []
-
-    # For each table, get all columns and their types
-    for table in tables:
-        curr_table = {'table': f'{table.table_schema}.{table.table_name}', 'columns': []}
-        cursor.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_schema = '{table.table_schema}' AND table_name = '{table.table_name}'")
-        columns = cursor.fetchall()
-        for column in columns:
-            curr_table['columns'].append({'name': column.column_name, 'type': column.data_type})
-        table_details.append(curr_table)
+        # For each table, get all columns and their types
+        for table in tables:
+            curr_table = {'table': f'{table.table_schema}.{table.table_name}', 'columns': []}
+            cursor.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_schema = '{table.table_schema}' AND table_name = '{table.table_name}'")
+            columns = cursor.fetchall()
+            for column in columns:
+                curr_table['columns'].append({'name': column.column_name, 'type': column.data_type})
+            table_details.append(curr_table)
         
-
-    # Close the connection
-    conn.close()
-
     return table_details
 
 def query_sql_db(database, query):
@@ -74,22 +118,10 @@ def query_sql_db(database, query):
     :param database: str, the name of the SQL database.
     :param query: str, query to be executed.
     """
-    dotenv.load_dotenv()
-    SERVER = os.getenv('SERVER')  
-    DATABASE = os.getenv('DATABASE')  
-    USERNAME = os.getenv('SQL_USERNAME')  
-    PASSWORD = os.getenv('PASSWORD')  
-
-    # Create a connection string for the Azure SQL database  
-    connectionString = f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={SERVER};DATABASE={DATABASE};UID={USERNAME};PWD={PASSWORD}'  
-
-    # Connect to the Azure SQL database using pyodbc  
-    conn = pyodbc.connect(connectionString)  
-
-    dataframe = pd.read_sql(query, conn)
-    return dataframe
-
-import time
+    with connect_to_sql_db() as conn:
+        # Execute the query and return the results as a pandas dataframe
+        dataframe = pd.read_sql(query, conn)
+        return dataframe
 
 # Define a function that waits for a run to complete  
 def wait_on_run(run, thread):  
@@ -105,15 +137,13 @@ def wait_on_run(run, thread):
     # Return the run object once it is no longer queued or in progress  
     return run  
   
-# Import the json module for JSON manipulation  
-import json  
-  
 # Define a function to submit a message to a thread  
 def submit_message(assistant_id, thread, user_message):  
     # Create a message in the thread with the role of 'user'  
     client.beta.threads.messages.create(  
         thread_id=thread.id, role="user", content=user_message  
     )  
+
     # Create a run associated with the thread and assistant  
     return client.beta.threads.runs.create(  
         thread_id=thread.id,  
@@ -124,9 +154,6 @@ def submit_message(assistant_id, thread, user_message):
 def get_response(thread):  
     # List messages in ascending order  
     return client.beta.threads.messages.list(thread_id=thread.id, order="asc")  
-  
-# Import the time module for sleep functionality  
-import time  
   
 # Define a function to pretty print messages  
 def pretty_print(messages):  
@@ -343,21 +370,20 @@ if user_input:
     st.session_state.messages.append({'role': 'user', 'content': user_input})  
   
     # Call the function to update the messages displayed in the app  
-    update_messages()  
-  
-    # Print the ASSISTANT_ID environment variable to the console (for debugging purposes)  
-    print(os.getenv('ASSISTANT_ID'))  
+    update_messages()
+
+    assistant = get_assistant(client)
   
     # If there is no active conversation thread  
     if st.session_state.thread == None:  
         # Create a new thread and run using the user input and the assistant ID from the environment variable  
-        thread, run = create_thread_and_run(user_input, os.getenv('ASSISTANT_ID'))  
+        thread, run = create_thread_and_run(user_input, assistant.id)  
         # Store the new thread in the session state  
         st.session_state.thread = thread  
     else:  
         # If a thread already exists, submit the message to the existing thread  
         thread = st.session_state.thread  
-        run = submit_message(os.getenv('ASSISTANT_ID'), thread, user_input)  
+        run = submit_message(assistant.id, thread, user_input)  
   
     # Start a new turn in the conversation  
     start_conversation_turn(run, thread)  
@@ -397,4 +423,3 @@ if user_input:
   
     # Update the session state with the current thread  
     st.session_state.thread = thread  
-

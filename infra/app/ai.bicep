@@ -11,6 +11,9 @@ param deploymentCapacity int = 30
 param keyVaultName string
 param aiApiKeySecretName string
 
+var chatGptDeploymentNameVar = !empty(chatGptDeploymentName) ? chatGptDeploymentName : 'chat'
+var embeddingGptDeploymentNameVar = !empty(embeddingGptDeploymentName) ? embeddingGptDeploymentName : 'embedding'
+
 module ai '../core/ai/cognitiveservices.bicep' = {
   name: '${name}-deployment'
   params: {
@@ -23,7 +26,7 @@ module ai '../core/ai/cognitiveservices.bicep' = {
     deploymentCapacity: deploymentCapacity
     deployments: [
       {
-        name: !empty(chatGptDeploymentName) ? chatGptDeploymentName : 'chat'
+        name: chatGptDeploymentNameVar
         model: {
           format: 'OpenAI'
           name: !empty(chatGptModelName) ? chatGptModelName : 'gpt-4'
@@ -34,7 +37,7 @@ module ai '../core/ai/cognitiveservices.bicep' = {
         }
       }
       {
-        name: !empty(embeddingGptDeploymentName) ? embeddingGptDeploymentName : 'embedding'
+        name: embeddingGptDeploymentNameVar
         model: {
           format: 'OpenAI'
           name: !empty(embeddingGptModelName) ? embeddingGptModelName : 'text-embedding-ada-002'
@@ -61,3 +64,5 @@ module aiSecrets './ai-secrets.bicep' = {
 output aiEndpoint string = ai.outputs.openAiEndpointUri
 output aiName string = ai.outputs.openAiName
 output aiApiKeySecretName string = aiApiKeySecretName
+output aiChatGptDeploymentName string = chatGptDeploymentNameVar
+output aiEmbeddingGptDeploymentName string = embeddingGptDeploymentNameVar

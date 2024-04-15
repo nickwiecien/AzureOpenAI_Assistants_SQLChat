@@ -73,6 +73,11 @@ module web './app/web.bicep' = {
     applicationInsightsName: monitoring.outputs.applicationInsightsName
     appServicePlanId: appServicePlan.outputs.id
     keyVaultName: keyVault.outputs.name
+    sqlConnectionStringKey: sql.outputs.connectionStringKey
+    aiApiKeySecretName: ai.outputs.aiApiKeySecretName
+    aiEndpoint: ai.outputs.aiEndpoint
+    applicationInsightsInstrumentationKey: monitoring.outputs.applicationInsightsInstrumentationKey
+    chatModelDeploymentName: ai.outputs.aiChatGptDeploymentName    
   }
 }
 
@@ -122,23 +127,6 @@ module monitoring './core/monitor/monitoring.bicep' = {
     logAnalyticsName: !empty(logAnalyticsName) ? logAnalyticsName : '${abbrs.operationalInsightsWorkspaces}${resourceToken}'
     applicationInsightsName: !empty(applicationInsightsName) ? applicationInsightsName : '${abbrs.insightsComponents}${resourceToken}'
     applicationInsightsDashboardName: !empty(applicationInsightsDashboardName) ? applicationInsightsDashboardName : '${abbrs.portalDashboards}${resourceToken}'
-  }
-}
-
-module appSettings './core/host/appservice-appsettings.bicep' = {
-  scope: rg
-  name: 'appSettings'
-  params: {
-    appSettings: {
-      APPINSIGHTS_INSTRUMENTATIONKEY: monitoring.outputs.applicationInsightsInstrumentationKey
-      KEYVAULT_NAME: keyVault.outputs.name
-      SQL_DB_CONNECTION_STRING: '@Microsoft.KeyVault(VaultName=${keyVault.outputs.name};SecretName=${sql.outputs.connectionStringKey})'
-      AZURE_OPENAI_API_KEY: '@Microsoft.KeyVault(VaultName=${keyVault.outputs.name};SecretName=${ai.outputs.aiApiKeySecretName})'
-      AZURE_OPENAI_API_ENDPOINT: ai.outputs.aiEndpoint
-      AZURE_OPENAI_API_VERSION: '2024-02-15-preview'
-      SCM_DO_BUILD_DURING_DEPLOYMENT: true
-    }
-    name: web.outputs.SERVICE_WEB_NAME
   }
 }
 
