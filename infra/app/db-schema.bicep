@@ -14,10 +14,10 @@ resource sqlDeploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' 
   location: location
   kind: 'AzureCLI'
   properties: {
-    azCliVersion: '2.37.0'
+    azCliVersion: '2.52.0'
     retentionInterval: 'PT1H' // Retain the script resource for 1 hour after it ends running
     timeout: 'PT5M' // Five minutes
-    cleanupPreference: 'OnSuccess'
+    cleanupPreference: 'OnExpiration'
     environmentVariables: [
       {
         name: 'DBNAME'
@@ -37,25 +37,17 @@ resource sqlDeploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' 
       }
     ]
 
+
     scriptContent: '''
-wget https://github.com/microsoft/go-sqlcmd/releases/download/v0.8.1/sqlcmd-v0.8.1-linux-x64.tar.bz2
-tar x -f sqlcmd-v0.8.1-linux-x64.tar.bz2 -C .
+apk add dotnet6-sdk
 
-wget https://github.com/Microsoft/sql-server-samples/releases/download/adventureworks/AdventureWorksLT2022.bak
+dotnet tool install -g microsoft.sqlpackage
 
-cat <<SCRIPT_END > ./installSchema.sql
-RESTORE DATABASE [AdventureWorks2022]
-FROM DISK = 'AdventureWorks2022.bak'
-WITH
-    MOVE 'AdventureWorks2022' TO '/var/opt/mssql/data/AdventureWorks2022.mdf',
-    MOVE 'AdventureWorks2022_log' TO '/var/opt/mssql/data/AdventureWorks2022_log.ldf',
-    FILE = 1,
-    NOUNLOAD,
-    STATS = 5;
-GO
-SCRIPT_END
+export PATH="$PATH:/root/.dotnet/tools"
 
-./sqlcmd -S ${DBSERVER} -d ${DBNAME} -U ${SQLADMIN} -i ./installSchema.sql
+wget https://github.com/nickwiecien/AzureOpenAI_Assistants_SQLChat/blob/b64ea81bf7c36aae703d21e08a44deed38b748a1/infra/data/adventureworkslt.bacpac
+
+sqlpackage /Action:Import /SourceFile:"adventureworkslt.bacpac" /tsn:"tcp:$DBSERVER,1433" /tdn:"$DBNAME" /tu:"$SQLADMIN" /tp:"$SQLCMDPASSWORD"
     '''
   }
 }

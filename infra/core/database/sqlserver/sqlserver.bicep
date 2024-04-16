@@ -31,6 +31,14 @@ resource sqlServer 'Microsoft.Sql/servers@2022-05-01-preview' = {
     location: location
   }
 
+  resource azureIpFirewall 'firewallRules' = {
+    name: 'AllowAllAzureIPs'
+    properties: {
+      startIpAddress: '0.0.0.0'
+      endIpAddress: '0.0.0.0'
+    }
+  }
+
   resource firewall 'firewallRules' = {
     name: 'Azure Services'
     properties: {
