@@ -29,16 +29,5 @@ module sqlServer '../core/database/sqlserver/sqlserver.bicep' = {
   }
 }
 
-module installSqlServerSchema './db-schema.bicep' = {
-  name: '${name}-schema'
-  params: {
-    name: name
-    sqlAdmin: 'sqlAdmin'
-    sqlAdminPassword: sqlAdminPassword
-    databaseName: sqlServer.outputs.databaseName
-    location: location
-  }
-}
-
 output connectionStringKey string = sqlServer.outputs.connectionStringKey
 output databaseName string = sqlServer.outputs.databaseName
