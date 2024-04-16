@@ -48,3 +48,25 @@ Run the following command to deploy the entire solution to Azure.
 ```shell
 azd up
 ```
+
+### Demo
+
+We can run human language queries against the database and let OpenAI generate the relevant SQL.
+
+For instance:
+
+```
+Give me the total sales by customer and chart with a pie chart with the customer names as labels
+```
+
+After issuing this query, we can see that the web app is querying the data dictionary of the database to get the schema of the data model.
+
+![gathering-database-schema](./.img/gathering-database-schema.png)
+
+Next, we can see it generate the correct SQL query and retrieve the data.
+
+![sql-query](./.img/sql-query.png)
+
+Finally, we can see it generate the pie chart
+
+![pie-chart](./.img/pie-chart.png)

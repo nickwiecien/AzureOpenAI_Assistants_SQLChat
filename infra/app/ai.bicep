@@ -61,7 +61,7 @@ module aiSecrets './ai-secrets.bicep' = {
   }
 }
 
-output aiEndpoint string = ai.outputs.openAiEndpointUri
+output aiEndpoint string = 'https://${location}.api.cognitive.microsoft.com'
 output aiName string = ai.outputs.openAiName
 output aiApiKeySecretName string = aiApiKeySecretName
 output aiChatGptDeploymentName string = chatGptDeploymentNameVar

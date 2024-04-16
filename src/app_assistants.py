@@ -40,15 +40,18 @@ def get_assistant(client):
     assistant_id = os.getenv('ASSISTANT_ID')
     assistants = client.beta.assistants.list()
 
+    return_value = None
+
     for assistant in assistants:
         if assistant.name == 'sqlchat':
-            return assistant
+            return_value = assistant
         elif assistant.id == assistant_id:
             return assistant
-        else:
-            return create_assistant(client)
+            
+    if not return_value:
+        return_value = create_assistant(client)
 
-    return None
+    return return_value
 
 def create_assistant(client):
     model = os.getenv('AZURE_OPENAI_CHAT_MODEL_DEPLOYMENT_NAME')
@@ -111,11 +114,10 @@ def get_sql_db_schema(database):
         
     return table_details
 
-def query_sql_db(database, query):
+def query_sql_db(query):
     """
     Executes a query against an Azure SQL database and returns results as a pandas dataframe
 
-    :param database: str, the name of the SQL database.
     :param query: str, query to be executed.
     """
     with connect_to_sql_db() as conn:
@@ -240,7 +242,7 @@ def start_conversation_turn(run, thread):
                     st.session_state.messages.append({'role': 'sqlquery', 'content': args['query']})  
                 try:  
                     # Call the function to execute the SQL query with the provided arguments  
-                    response = (query_sql_db(args['database'], args['query']))  
+                    response = (query_sql_db(args['query']))  
                     # Display the query results in an expandable section  
                     with st.expander("SQL Data"):  
                         st.dataframe(response)  
@@ -341,9 +343,6 @@ first_message_set = False  # Flag to indicate if the first message has been set
 # Initialize variables for thread and run to None, these will be used later for conversation management  
 thread = None  
 run = None  
-  
-# Load environment variables from .env file  
-dotenv.load_dotenv()  
   
 # Set the title of the Streamlit app  
 st.title('SQL Chat Demo - Azure OpenAI Assistants API')  

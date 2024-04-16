@@ -62,21 +62,6 @@ module sql './app/db.bicep' = {
   }
 }
 
-// module sql './core/database/sqlserver/sqlserver.bicep' = {
-//   scope: rg
-//   name: 'sql'
-//   params: {
-//     appUserPassword: appUserPassword
-//     databaseName: !empty(sqlDatabaseName) ? sqlDatabaseName : '${abbrs.sqlServersDatabases}${resourceToken}'
-//     keyVaultName: keyVault.outputs.name
-//     name: !empty(sqlServerName) ? sqlServerName : '${abbrs.sqlServers}${resourceToken}'
-//     sqlAdminPassword: sqlAdminPassword
-//     location: location
-//     connectionStringKey: 'SqlConnectionString'
-//     tags: tags
-//   }
-// }
-
 // The application frontend
 module web './app/web.bicep' = {
   name: 'web'
