@@ -1,0 +1,6 @@
+name: azureopenai-assistants-sqlchat
+services:
+  web:
+    project: ./src 
+    language: py
+    host: appservice
